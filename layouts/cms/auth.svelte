@@ -1,5 +1,4 @@
 <script context="module">
-    import { onMount } from 'svelte';
     import { session } from './session.svelte';
     import { storage } from './storage.svelte';
     const settings = {
@@ -89,29 +88,27 @@
     }
 
     export async function authenticate() {
-        onMount(async () => {
-            const state = session.get('gitlab_state');
-            const tokens = storage.get('gitlab_tokens');
-            if (
-                parameters.code &&
-                parameters.state &&
-                state &&
-                parameters.state == state
-            ) {
-                await capture();
+        const state = session.get('gitlab_state');
+        const tokens = storage.get('gitlab_tokens');
+        if (
+            parameters.code &&
+            parameters.state &&
+            state &&
+            parameters.state == state
+        ) {
+            await capture();
+            return true;
+        } else if (tokens) {
+            try {
+                await refresh();
                 return true;
-            } else if (tokens) {
-                try {
-                    await refresh();
-                    return true;
-                } catch (error) {
-                    await start();
-                    return false;
-                }
-            } else {
+            } catch (error) {
                 await start();
                 return false;
             }
-        });
+        } else {
+            await start();
+            return false;
+        }
     }
 </script>
